@@ -1,0 +1,22 @@
+before fork
+parent
+parent
+parent
+parent
+parent
+parent
+parent
+parent
+parent
+parent
+before fork
+child
+child
+child
+child
+child
+child
+child
+child
+child
+child
