@@ -6,7 +6,6 @@
 
 int main()
 {
-
     // Open a new file
     FILE *file = fopen("JUNK.txt", "w");
 
@@ -17,7 +16,8 @@ int main()
     if (fork() == 0)
     {
         // In the child
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++)
+        {
             // Queue up more messages for the child buffer
             fprintf(file, "child\n");
         }
@@ -25,7 +25,8 @@ int main()
     else
     {
         // In the parent
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++)
+        {
             // Queue up more messages for the parent buffer
             fprintf(file, "parent\n");
         }

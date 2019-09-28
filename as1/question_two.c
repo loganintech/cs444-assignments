@@ -4,7 +4,6 @@
 
 int main()
 {
-
     int xx = 100;
 
     // When calling fork xx is copied to the stack of the child thread
