@@ -18,7 +18,7 @@ int main()
     }
     else
     {
-        //parent process
+        // parent process
         // The value of parent's xx at this point is 100
         printf("xx parent before change: %d\n", xx);
         xx = 999;

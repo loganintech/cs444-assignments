@@ -11,8 +11,8 @@ int main()
 
     // Write to a local buffer that will flush to a file from the OS
     fprintf(file, "before fork\n");
+    fflush(file); // Manually flush the buffer, so we don't double-print fork
 
-    // Fork, copying the local `before fork` buffer to the child thread
     if (fork() == 0)
     {
         // In the child
@@ -32,8 +32,5 @@ int main()
         }
     }
 
-    // When the child / parent finishes execution, flush the output
-    // Typically parent will finish first since the CPU would have to context-switch over to the child...
-    // ... which means that the parent will usually print first.
     return 0;
 }

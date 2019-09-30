@@ -12,7 +12,7 @@ int main()
     }
     else
     {
-        //parent process
+        // parent process
         wait(NULL);
         printf("goodybye\n");
     }
