@@ -1,0 +1,23 @@
+[package]
+name = "as1-rust"
+version = "0.1.0"
+authors = ["Logan Saso <logansaso@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[[bin]]
+    path = "src/q2.rs"
+    name = "question_two"
+
+[[bin]]
+    path = "src/q3.rs"
+    name = "question_three"
+[[bin]]
+    path = "src/q4.rs"
+    name = "question_four"
+[[bin]]
+    path = "src/q5.rs"
+    name = "question_five"

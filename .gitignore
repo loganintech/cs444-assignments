@@ -39,3 +39,4 @@
 _zombie
 
 **/.vstags
+**/target/**
