@@ -1,6 +1,7 @@
 #include "beavalloc.h"
 #include "unistd.h"
-#include "stdio.h"
+#include "stdio.h"  // for stderr
+#include "string.h" // for memset
 
 #define bool int
 #define TRUE 1
@@ -16,6 +17,9 @@ struct region_info
     struct region_info *next;
     bool is_free;
 };
+
+struct region_info *get_empty_block(struct region_info **last, size_t size);
+struct region_info *get_bytes(struct region_info *last, size_t size);
 
 struct region_info *get_empty_block(struct region_info **last, size_t size)
 {
@@ -52,6 +56,8 @@ struct region_info *get_bytes(struct region_info *last, size_t size)
 
 void *beavalloc(size_t size)
 {
+    struct region_info *last;
+    struct region_info *new_block;
     if (size == 0)
     {
         return NULL;
@@ -59,7 +65,7 @@ void *beavalloc(size_t size)
 
     if (head == NULL)
     { // We haven't initialized anything yet
-        struct region_info *new_block = get_bytes(NULL, size);
+        new_block = get_bytes(NULL, size);
         if (new_block == NULL)
         {
             return NULL;
@@ -69,9 +75,9 @@ void *beavalloc(size_t size)
     }
 
     //This isn't the first call to malloc
-    struct region_info *last = head;
+    last = head;
     // get_empty_block traverses the list changing last
-    struct region_info *new_block = get_empty_block(&last, size);
+    new_block = get_empty_block(&last, size);
     if (new_block != NULL)
     {
         new_block->is_free = FALSE;
@@ -102,12 +108,13 @@ void *beavalloc(size_t size)
 
 void beavfree(void *ptr)
 {
+    struct region_info *meta;
     if (ptr == NULL)
     {
         return;
     }
 
-    struct region_info *meta = ptr - REGION_DATA_SIZE;
+    meta = ptr - REGION_DATA_SIZE;
     meta->is_free = TRUE;
     while ((void *)(meta->bytes + REGION_DATA_SIZE) == meta->next && meta->next->is_free)
     {
@@ -129,26 +136,31 @@ void beavalloc_set_verbose(uint8_t verbose)
 
 void *beavcalloc(size_t nmemb, size_t size)
 {
-    size_t calc_size = nmemb * size;
-    void *ptr = beavalloc(calc_size);
+    size_t calc_size;
+    void *ptr;
+    calc_size = nmemb * size;
+    ptr = beavalloc(calc_size);
     memset(ptr, 0, calc_size);
     return ptr;
 }
 
 void *beavrealloc(void *ptr, size_t size)
 {
+    struct region_info *meta;
+    void *new_bytes;
+
     if (ptr == NULL)
     {
         return beavalloc(size);
     }
 
-    struct region_info *meta = ptr - REGION_DATA_SIZE;
+    meta = ptr - REGION_DATA_SIZE;
     if (meta->bytes >= size)
     {
         return ptr;
     }
 
-    void *new_bytes = beavalloc(size);
+    new_bytes = beavalloc(size);
     if (new_bytes == NULL)
     {
         return NULL;
