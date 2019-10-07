@@ -192,8 +192,8 @@ void run_tests(void)
         beavfree(ptr3);
         beavfree(ptr5);
 
-        beavalloc_dump(FALSE);
-        //beavalloc_dump(TRUE);
+        // beavalloc_dump(FALSE);
+        beavalloc_dump(TRUE);
 
         beavalloc_reset();
         ptr1 = sbrk(0);
@@ -229,8 +229,8 @@ void run_tests(void)
         beavfree(ptr2);
         beavfree(ptr4);
 
-        beavalloc_dump(FALSE);
-        //beavalloc_dump(TRUE);
+        // beavalloc_dump(FALSE);
+        beavalloc_dump(TRUE);
 
         beavalloc_reset();
         ptr1 = sbrk(0);
@@ -280,8 +280,8 @@ void run_tests(void)
         fprintf(stderr, "-- coalesce right and left\n");
         beavfree(ptr3);
 
-        beavalloc_dump(FALSE);
-        //beavalloc_dump(TRUE);
+        // beavalloc_dump(FALSE);
+        beavalloc_dump(TRUE);
 
         beavalloc_reset();
         ptr1 = sbrk(0);

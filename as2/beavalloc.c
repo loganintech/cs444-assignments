@@ -15,6 +15,7 @@ struct region_info
 {
     size_t bytes;
     struct region_info *next;
+    struct region_info *prev;
     bool is_free;
 };
 
@@ -46,6 +47,7 @@ struct region_info *get_bytes(struct region_info *last, size_t size)
     if (last != NULL)
     {
         last->next = new_block;
+        new_block->prev = last;
     }
 
     new_block->bytes = size;
@@ -91,6 +93,7 @@ void *beavalloc(size_t size)
             second_part->next = new_block->next;                               // Set our second part of this block to the next of w/e the current block is
             second_part->bytes = (new_block->bytes - size) - REGION_DATA_SIZE; // The size of the new block is the size of the old one - the size we're taking - the size of the data region
             second_part->is_free = TRUE;
+            second_part->prev = new_block;
             new_block->next = second_part; // Set the current block to point to our new second part
             new_block->bytes = size;       // Reset the size on the new block
         }
@@ -114,13 +117,29 @@ void beavfree(void *ptr)
         return;
     }
 
+    struct region_info *meta_copy;
     meta = ptr - REGION_DATA_SIZE;
+    meta_copy = meta;
     meta->is_free = TRUE;
+    while (meta_copy->prev && meta_copy - (meta_copy->prev->bytes / REGION_DATA_SIZE) - 1 == meta_copy->prev && meta_copy->prev->is_free)
+    {
+        // Expand the previous node's current bytes to the size of it plus the area of this region
+        meta->prev->bytes = meta->prev->bytes + REGION_DATA_SIZE + meta->bytes;
+        // When going backwards, we want to change the previous node's "next" to point to the current node's next, eliminating it from the list
+        meta->prev->next = meta->next;
+        // And then traverse backwards
+        meta = meta->prev;
+    }
+
     // printf("\n%p - %p\n", meta + 1 + (meta->bytes / REGION_DATA_SIZE), meta->next);
     while (meta && meta + 1 + (meta->bytes / REGION_DATA_SIZE) == meta->next && meta->next->is_free)
     {
+        // Expand the current bytes to the bytes of this region and the next + the info region
         meta->bytes = meta->bytes + REGION_DATA_SIZE + meta->next->bytes;
+        // When going forwards, we don't want to change the previous because that isn't changing
+        // Set our next to the next's next so that we eliminate the middle one from the list
         meta->next = meta->next->next;
+        // And then traverse to the new next node
         meta = meta->next;
     }
 }
@@ -192,33 +211,35 @@ void beavalloc_dump(unsigned int leaks_only)
     {
         fprintf(stderr, "heap map\n");
     }
-    fprintf(stderr, "  %s\t%s\t%s\t%s"
+    fprintf(stderr, "  %s\t%s\t%s\t%s\t%s"
                     "\t%s\t%s\t%s\t%s\t%s\t%s"
                     "\n",
-            "blk no  ", "block add ", "next add  ", "data add  ",
+            "blk no  ", "block add ", "next add  ", "prev add  ", "data add  ",
             "blk off  ", "dat off  ", "capacity ", "size     ", "blk size ", "status   ");
     for (curr = head, i = 0; curr != NULL; curr = curr->next, i++)
     {
         if (leaks_only == FALSE || (leaks_only == TRUE && curr->is_free == FALSE))
         {
-            fprintf(stderr, "  %u\t\t%9p\t%9p\t%9p\t%u\t\t%u\t\t"
+            fprintf(stderr, "  %u\t\t%9p\t%9p\t%9p\t%9p\t%u\t\t%u\t\t"
                             "%u\t\t%u\t\t%u\t\t%s\t%c\n",
                     i,
                     curr,
                     curr->next,
+                    curr->prev,
                     curr + REGION_DATA_SIZE,
                     (unsigned)((void *)curr - (void *)head),
                     (unsigned)((void *)curr + REGION_DATA_SIZE - (void *)head),
-                    (unsigned)curr->bytes,
+                    ((unsigned int)curr->is_free > 0) * (unsigned)curr->bytes, // If it's free the bytes are available
                     (unsigned)curr->bytes,
                     (unsigned)(curr->bytes + REGION_DATA_SIZE),
                     curr->is_free ? "free  " : "in use",
                     curr->is_free ? '*' : ' ');
-            if (!curr->is_free)
+            if (curr->is_free)
             {
-                user_bytes += curr->bytes;
+                capacity_bytes += curr->bytes;
             }
-            capacity_bytes += curr->bytes;
+            user_bytes += curr->bytes;
+
             block_bytes += curr->bytes + REGION_DATA_SIZE;
             if (curr->is_free == FALSE && leaks_only == TRUE)
             {
@@ -249,7 +270,7 @@ void beavalloc_dump(unsigned int leaks_only)
     }
     else
     {
-        fprintf(stderr, "  %s\t\t\t\t\t\t\t\t\t\t"
+        fprintf(stderr, "  %s\t\t\t\t\t\t\t\t\t\t\t\t"
                         "%u\t\t%u\t\t%u\n",
                 "Total bytes used", capacity_bytes, user_bytes, block_bytes);
         fprintf(stderr, "  Used blocks: %u  Free blocks: %u  "
