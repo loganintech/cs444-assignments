@@ -15,4 +15,17 @@ int main()
     beavfree(smallptr);
     beavalloc_dump(FALSE);
     printf("%p, %p, %p\n", otherptr, smallptr, smallptr2);
+
+    void *someptr = beavalloc(2048);
+    beavfree(someptr);
+    someptr = beavalloc(50);
+    void *someptr2 = beavalloc(200);
+    void *someptr3 = beavalloc(220);
+    beavfree(someptr2);
+    someptr2 = beavalloc(50);
+    void *someptr4 = beavalloc(60);
+    beavfree(someptr3);
+    beavfree(someptr4);
+    beavfree(someptr);
+    beavalloc_dump(FALSE);
 }

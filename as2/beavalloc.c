@@ -116,9 +116,11 @@ void beavfree(void *ptr)
 
     meta = ptr - REGION_DATA_SIZE;
     meta->is_free = TRUE;
-    while ((void *)(meta->bytes + REGION_DATA_SIZE) == meta->next && meta->next->is_free)
+    // printf("\n%p - %p\n", meta + 1 + (meta->bytes / REGION_DATA_SIZE), meta->next);
+    while (meta && meta + 1 + (meta->bytes / REGION_DATA_SIZE) == meta->next && meta->next->is_free)
     {
         meta->bytes = meta->bytes + REGION_DATA_SIZE + meta->next->bytes;
+        meta->next = meta->next->next;
         meta = meta->next;
     }
 }
