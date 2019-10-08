@@ -7,6 +7,7 @@
 #define TRUE 1
 #define FALSE 0
 #define REGION_DATA_SIZE sizeof(struct region_info)
+#define BLOCK_REQUEST_SIZE 1024
 
 static struct region_info *head;
 static bool global_verbose = FALSE;
@@ -34,13 +35,23 @@ struct region_info *get_empty_block(struct region_info **last, size_t size)
 
 struct region_info *get_bytes(struct region_info *last, size_t size)
 {
+    // Get base address for this new data
     struct region_info *new_block = sbrk(0);
-    void *new_bytes = sbrk(size + REGION_DATA_SIZE);
-    // new_bytes and new_block should point to the same thing now
-
-    if (new_bytes == (void *)-1) // an error occurred
+    struct region_info *second_block = new_block;
+    size_t first_total_block_size = size + REGION_DATA_SIZE;
+    size_t total = 0;
+    void *new_bytes;
+    while (total < first_total_block_size + REGION_DATA_SIZE)
     {
-        return NULL;
+        // Load bytes in BLOCK_REQUEST_SIZE increments until we have enough to fit the requested block and the extra space block
+        new_bytes = sbrk(BLOCK_REQUEST_SIZE);
+        // new_bytes and new_block should point to the same thing now
+
+        if (new_bytes == (void *)-1) // an error occurred
+        {
+            return NULL;
+        }
+        total += BLOCK_REQUEST_SIZE;
     }
 
     if (last != NULL)
@@ -48,8 +59,13 @@ struct region_info *get_bytes(struct region_info *last, size_t size)
         last->next = new_block;
     }
 
+    second_block = (void *)new_block + first_total_block_size;
+    second_block->next = NULL;
+    second_block->bytes = total - (first_total_block_size + REGION_DATA_SIZE);
+    second_block->next = NULL;
+    second_block->is_free = TRUE;
     new_block->bytes = size;
-    new_block->next = NULL;
+    new_block->next = second_block;
     new_block->is_free = FALSE;
     return new_block;
 }
@@ -209,8 +225,8 @@ void beavalloc_dump(unsigned int leaks_only)
                     curr + REGION_DATA_SIZE,
                     (unsigned)((void *)curr - (void *)head),
                     (unsigned)((void *)curr + REGION_DATA_SIZE - (void *)head),
-                    (unsigned)curr->bytes,
-                    (unsigned)curr->bytes,
+                    (curr->is_free > 0) * (unsigned)curr->bytes,
+                    (curr->is_free == 0) * (unsigned)curr->bytes,
                     (unsigned)(curr->bytes + REGION_DATA_SIZE),
                     curr->is_free ? "free  " : "in use",
                     curr->is_free ? '*' : ' ');
@@ -218,7 +234,10 @@ void beavalloc_dump(unsigned int leaks_only)
             {
                 user_bytes += curr->bytes;
             }
-            capacity_bytes += curr->bytes;
+            else
+            {
+                capacity_bytes += curr->bytes;
+            }
             block_bytes += curr->bytes + REGION_DATA_SIZE;
             if (curr->is_free == FALSE && leaks_only == TRUE)
             {
