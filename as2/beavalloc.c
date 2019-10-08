@@ -39,11 +39,11 @@ struct region_info *get_bytes(struct region_info *last, size_t size)
 {
     struct region_info *new_block = sbrk(0);
     struct region_info *second_block = new_block;
-    void *new_bytes = (void *)new_block;
-    size_t requested = size + REGION_DATA_SIZE;
+    void *new_bytes;
+    size_t first_block_total_size = size + REGION_DATA_SIZE;
     size_t total = 0;
 
-    while (total <= requested)
+    while (total <= first_block_total_size)
     {
         total += BLOCK_MINIMUM;
         new_bytes = sbrk(BLOCK_MINIMUM);
@@ -61,7 +61,7 @@ struct region_info *get_bytes(struct region_info *last, size_t size)
         new_block->prev = last;
     }
 
-    if (total - requested <= REGION_DATA_SIZE)
+    if (total - first_block_total_size <= REGION_DATA_SIZE)
     {
         total += BLOCK_MINIMUM;
         new_bytes = sbrk(BLOCK_MINIMUM);
@@ -74,10 +74,10 @@ struct region_info *get_bytes(struct region_info *last, size_t size)
 
     new_block->bytes = size;
     new_block->is_free = FALSE;
-    second_block = ((void *)new_block) + requested;
+    second_block = ((void *)new_block) + first_block_total_size;
     new_block->next = second_block;
     // Count REGION_DATA_SIZE again for the region of the second block
-    second_block->bytes = total - (size + (2 * REGION_DATA_SIZE));
+    second_block->bytes = total - (first_block_total_size + REGION_DATA_SIZE);
     second_block->prev = new_block;
     second_block->next = NULL;
     second_block->is_free = TRUE;
@@ -117,12 +117,16 @@ void *beavalloc(size_t size)
         // Make sure it has enough space, giving it at least 64 bytes of overhead
         if (new_block->bytes > size + REGION_DATA_SIZE + 64)
         {
-            // We have to divide size by the region size because new_block is already a `region_info` pointer
-            struct region_info *second_part = new_block + 1 + (size / REGION_DATA_SIZE);
+            struct region_info *second_part = ((void *)new_block) + REGION_DATA_SIZE + size;
             second_part->next = new_block->next;                               // Set our second part of this block to the next of w/e the current block is
             second_part->bytes = (new_block->bytes - size) - REGION_DATA_SIZE; // The size of the new block is the size of the old one - the size we're taking - the size of the data region
             second_part->is_free = TRUE;
             second_part->prev = new_block;
+            // If the next block already exists, make sure to set it's "prev" pointer to the new previous block
+            if (second_part->next != NULL)
+            {
+                second_part->next->prev = second_part;
+            }
             new_block->next = second_part; // Set the current block to point to our new second part
             new_block->bytes = size;       // Reset the size on the new block
         }
@@ -149,17 +153,17 @@ void beavfree(void *ptr)
     struct region_info *meta_copy;
     meta = ptr - REGION_DATA_SIZE;
     meta_copy = meta;
-    meta->is_free = TRUE;
     while (meta_copy->prev && meta_copy - (meta_copy->prev->bytes / REGION_DATA_SIZE) - 1 == meta_copy->prev && meta_copy->prev->is_free)
     {
         // Expand the previous node's current bytes to the size of it plus the area of this region
-        meta->prev->bytes = meta->prev->bytes + REGION_DATA_SIZE + meta->bytes;
+        meta_copy->prev->bytes = meta_copy->prev->bytes + REGION_DATA_SIZE + meta_copy->bytes;
         // When going backwards, we want to change the previous node's "next" to point to the current node's next, eliminating it from the list
-        meta->prev->next = meta->next;
+        meta_copy->prev->next = meta_copy->next;
         // And then traverse backwards
-        meta = meta->prev;
+        meta_copy = meta_copy->prev;
     }
 
+    meta->is_free = TRUE;
     // printf("\n%p - %p\n", meta + 1 + (meta->bytes / REGION_DATA_SIZE), meta->next);
     while (meta && meta + 1 + (meta->bytes / REGION_DATA_SIZE) == meta->next && meta->next->is_free)
     {
