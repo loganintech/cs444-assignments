@@ -2,11 +2,13 @@
 #include "unistd.h"
 #include "stdio.h"  // for stderr
 #include "string.h" // for memset
+#include "errno.h"
 
 #define bool int
 #define TRUE 1
 #define FALSE 0
 #define REGION_DATA_SIZE sizeof(struct region_info)
+#define BLOCK_REQUEST 1024
 
 static struct region_info *head;
 static bool global_verbose = FALSE;
@@ -36,22 +38,56 @@ struct region_info *get_empty_block(struct region_info **last, size_t size)
 struct region_info *get_bytes(struct region_info *last, size_t size)
 {
     struct region_info *new_block = sbrk(0);
-    void *new_bytes = sbrk(size + REGION_DATA_SIZE);
-    // new_bytes and new_block should point to the same thing now
+    struct region_info *second_block = sbrk(0);
 
+    size_t wanted = size + REGION_DATA_SIZE;
+    size_t total = BLOCK_REQUEST;
+    void *new_bytes = sbrk(BLOCK_REQUEST);
+    void* errcheck;
     if (new_bytes == (void *)-1) // an error occurred
     {
         return NULL;
     }
+    new_block->bytes = size;
 
+    // If we said wanted < 0 we'd never stop because size_t would wrap
+    while (size + REGION_DATA_SIZE > BLOCK_REQUEST && wanted + BLOCK_REQUEST >= BLOCK_REQUEST) {
+        wanted -= BLOCK_REQUEST;
+        total += BLOCK_REQUEST;
+
+        errcheck = sbrk(BLOCK_REQUEST);
+        if (errcheck == (void *)-1) // an error occurred
+        {
+            return NULL;
+            errno = ENOMEM;
+        }
+    }
+
+    // If we have enough leftover to make another block
+    if (total - (new_block->bytes + REGION_DATA_SIZE) > REGION_DATA_SIZE) {
+
+        second_block = ((void*)new_block) + REGION_DATA_SIZE + new_block->bytes;
+        // Account for the region of the first block and this second block
+        second_block->bytes = (((void*)new_block) + total) - (new_block->bytes + (REGION_DATA_SIZE * 2));
+        second_block->next = NULL;
+        second_block->is_free = TRUE;
+
+    }
+    // new_bytes and new_block should point to the same thing now
+
+    new_block->next = NULL;
     if (last != NULL)
     {
         last->next = new_block;
         new_block->prev = last;
+
+        // If we actually changed the second block's address (aka it exists) add it to the map
+        if (second_block > new_block) {
+            new_block->next = second_block;
+            second_block->prev = new_block;
+        }
     }
 
-    new_block->bytes = size;
-    new_block->next = NULL;
     new_block->is_free = FALSE;
     return new_block;
 }
@@ -85,7 +121,7 @@ void *beavalloc(size_t size)
         new_block->is_free = FALSE;
 
         // Check if we have enough space to split the block
-        // Make sure it has enough space, giving it at least 64 bytes of overhead
+        // Make sure it has enough space, giving it at least 64 (arbitrarily chosen) bytes of overhead
         if (new_block->bytes > size + REGION_DATA_SIZE + 64)
         {
             // We have to divide size by the region size because new_block is already a `region_info` pointer
