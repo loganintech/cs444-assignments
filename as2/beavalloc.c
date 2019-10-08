@@ -2,11 +2,13 @@
 #include "unistd.h"
 #include "stdio.h"  // for stderr
 #include "string.h" // for memset
+#include "errno.h"
 
 #define bool int
 #define TRUE 1
 #define FALSE 0
 #define REGION_DATA_SIZE sizeof(struct region_info)
+#define BLOCK_MINIMUM 1024
 
 static struct region_info *head;
 static bool global_verbose = FALSE;
@@ -36,13 +38,22 @@ struct region_info *get_empty_block(struct region_info **last, size_t size)
 struct region_info *get_bytes(struct region_info *last, size_t size)
 {
     struct region_info *new_block = sbrk(0);
-    void *new_bytes = sbrk(size + REGION_DATA_SIZE);
-    // new_bytes and new_block should point to the same thing now
+    struct region_info *second_block = new_block;
+    void *new_bytes = (void *)new_block;
+    size_t requested = size + REGION_DATA_SIZE;
+    size_t total = 0;
 
-    if (new_bytes == (void *)-1) // an error occurred
+    while (total <= requested)
     {
-        return NULL;
+        total += BLOCK_MINIMUM;
+        new_bytes = sbrk(BLOCK_MINIMUM);
+        if ((void *)new_bytes == -1)
+        {
+            errno = ENOMEM;
+            return NULL;
+        }
     }
+    // new_bytes and new_block should point to the same thing now
 
     if (last != NULL)
     {
@@ -50,9 +61,27 @@ struct region_info *get_bytes(struct region_info *last, size_t size)
         new_block->prev = last;
     }
 
+    if (total - requested <= REGION_DATA_SIZE)
+    {
+        total += BLOCK_MINIMUM;
+        new_bytes = sbrk(BLOCK_MINIMUM);
+        if ((void *)new_bytes == -1)
+        {
+            errno = ENOMEM;
+            return NULL;
+        }
+    }
+
     new_block->bytes = size;
-    new_block->next = NULL;
     new_block->is_free = FALSE;
+    second_block = ((void *)new_block) + requested;
+    new_block->next = second_block;
+    // Count REGION_DATA_SIZE again for the region of the second block
+    second_block->bytes = total - (size + (2 * REGION_DATA_SIZE));
+    second_block->prev = new_block;
+    second_block->next = NULL;
+    second_block->is_free = TRUE;
+
     return new_block;
 }
 
@@ -187,7 +216,7 @@ void *beavrealloc(void *ptr, size_t size)
         return NULL;
     }
 
-    memcpy(new_bytes, ptr, meta->bytes);
+    memcpy(new_bytes, ptr + REGION_DATA_SIZE, meta->bytes);
     beavfree(ptr);
     return new_bytes;
 }
