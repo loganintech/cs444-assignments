@@ -1,6 +1,8 @@
 // R. Jesse Chaney
 
 #include <stdint.h>
+#include <stddef.h>
+#define uint unsigned int
 
 #ifndef __BEAVALLOC_H
 #define __BEAVALLOC_H
