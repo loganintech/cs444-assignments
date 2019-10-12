@@ -4,6 +4,7 @@
 #include "string.h" // for memset
 #include "assert.h"
 #include "errno.h"
+#include "stddef.h"
 
 #define bool int
 #define TRUE 1

@@ -1,7 +1,6 @@
 // R. Jesse Chaney
 
 #include <stdint.h>
-#include <stddef.h>
 
 #ifndef __BEAVALLOC_H
 #define __BEAVALLOC_H
@@ -57,6 +56,6 @@ void beavalloc_set_verbose(uint8_t);
 void *beavcalloc(size_t nmemb, size_t size);
 void *beavrealloc(void *ptr, size_t size);
 
-void beavalloc_dump(unsigned int leaks_only);
+void beavalloc_dump(uint leaks_only);
 
 #endif // __BEAVALLOC_H
