@@ -7,6 +7,6 @@ kirchchr pts/4    10-248-163-253.w 12:34   31.00s  0.33s  0.18s vim problem3.c
 heli     pts/5    10-249-7-129.wir 12:11   41:37   0.11s  0.11s -bash
 kochecam pts/6    10-197-32-240.sd 10:58    7.00s  0.40s  0.40s -bash
 chaneyr  pts/7    10-116-14-161.wi 11:47   21:27   0.38s  0.38s -bash
-leamya   pts/8    10-251-38-100.wi 11:20   15.00s  0.26s  0.26s sshd: leamya [priv] 
+leamya   pts/8    10-251-38-100.wi 11:20   15.00s  0.26s  0.26s sshd: leamya [priv]
 anandn   pts/9    10-249-219-101.w 12:27    7.00s  0.19s  0.19s -bash
 chaneyr  pts/10   10-116-14-161.wi 11:47    7.00s  0.37s  0.21s sshd: chaneyr [priv]
