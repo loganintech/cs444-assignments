@@ -8,7 +8,9 @@
             "cppStandard": "c++20",
             "intelliSenseMode": "clang-x64",
             "compilerArgs": [
-                "/usr/include"
+                "/usr/include",
+                "/usr/local/include",
+                "/usr/include/c++"
             ]
         }
     ],

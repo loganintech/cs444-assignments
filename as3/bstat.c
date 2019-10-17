@@ -13,6 +13,7 @@ char *get_mode(struct stat);
 char *get_owner_name(struct stat);
 char *get_group_name(struct stat);
 char *format_time(__time_t *time);
+void mystat(char *path);
 
 int main(int argc, char *argv[])
 {
@@ -31,20 +32,31 @@ int main(int argc, char *argv[])
 void mystat(char *path)
 {
     struct stat sb;
+    char *symthere;
+    char *filename;
+    char *sym_extracted;
+    struct stat other_stat;
+    char *mode_text;
+    char *owner;
+    char *group;
+    char *atime;
+    char *mtime;
+    char *ctime;
+
     if (lstat(path, &sb) == -1)
     {
         perror("lstat");
         exit(EXIT_FAILURE);
     }
 
-    char *symthere = malloc(1024);
+    symthere = malloc(1024);
     memset(symthere, 0, 1024);
     if ((sb.st_mode & S_IFMT) == S_IFLNK)
     {
         readlink(path, symthere, 1023);
     }
 
-    char *filename = extract_filename(path);
+    filename = extract_filename(path);
 
     printf("File: %s\n", filename);
     printf("  Filetype:            ");
@@ -64,15 +76,14 @@ void mystat(char *path)
         break;
     case S_IFLNK:
         printf("     Symbolic link");
-        struct stat other_stat;
         if (stat(symthere, &other_stat) != 0)
         {
             printf(" - with dangling destination\n");
         }
         else
         {
-            char *symthere = extract_filename(path);
-            printf(" -> %s\n", symthere);
+            sym_extracted = extract_filename(path);
+            printf(" -> %s\n", sym_extracted);
         }
 
         break;
@@ -88,17 +99,17 @@ void mystat(char *path)
     }
     free(symthere);
 
-    printf("  Device ID Number:         %d\n", sb.st_dev);
-    printf("  I-node number:            %lld\n", sb.st_ino);
-    char *mode_text = get_mode(sb);
+    printf("  Device ID Number:         %lu\n", sb.st_dev);
+    printf("  I-node number:            %lu\n", sb.st_ino);
+    mode_text = get_mode(sb);
     printf("  Mode:                     %s            (%o in octal)\n", mode_text, sb.st_mode & 0b111111111);
     free(mode_text);
     printf("  Link count:               %ld\n", (long)sb.st_nlink);
-    char *owner = get_owner_name(sb);
+    owner = get_owner_name(sb);
     printf("  Owner Id:                 %s                 (UID = %d)\n", owner, sb.st_uid);
     // free(owner);
 
-    char *group = get_group_name(sb);
+    group = get_group_name(sb);
     printf("  Group Id:                 %s                 (GID = %d)\n", group, sb.st_gid);
     // free(group);
 
@@ -106,13 +117,13 @@ void mystat(char *path)
     printf("  File size:                %lld bytes\n", (long long)sb.st_size);
 
     printf("  Blocks allocated:         %lld\n", (long long)sb.st_blocks);
-    char *atime = format_time(&sb.st_atime);
+    atime = format_time(&sb.st_atime);
     printf("  Last file access:         %s\n", atime);
     free(atime);
-    char *mtime = format_time(&sb.st_mtime);
+    mtime = format_time(&sb.st_mtime);
     printf("  Last file modification:   %s\n", mtime);
     free(mtime);
-    char *ctime = format_time(&sb.st_ctime);
+    ctime = format_time(&sb.st_ctime);
     printf("  Last status change:       %s\n", ctime);
     free(ctime);
 }
@@ -223,9 +234,10 @@ char *extract_filename(char *name)
 
 char *format_time(__time_t *time)
 {
+    struct tm *local;
     char *buf = malloc(1024);
     memset(buf, 0, 1024);
-    struct tm *local = localtime(time);
+    local = localtime(time);
     strftime(buf, 1023, "%Y-%m-%d %H:%M:%S %z (%Z) %A (local)", local);
     return buf;
 }

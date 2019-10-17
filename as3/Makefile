@@ -1,5 +1,4 @@
 
-loop: clean bstat
 
 bstat:
 	@gcc -g \
@@ -16,3 +15,5 @@ bstat:
 
 clean:
 	rm bstat
+
+loop: clean bstat
