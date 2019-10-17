@@ -1,5 +1,3 @@
-
-
 bstat:
 	@gcc -g \
 		-Wall \

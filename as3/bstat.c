@@ -82,7 +82,7 @@ void mystat(char *path)
         }
         else
         {
-            sym_extracted = extract_filename(path);
+            sym_extracted = extract_filename(symthere);
             printf(" -> %s\n", sym_extracted);
         }
 
@@ -102,15 +102,15 @@ void mystat(char *path)
     printf("  Device ID Number:         %lu\n", sb.st_dev);
     printf("  I-node number:            %lu\n", sb.st_ino);
     mode_text = get_mode(sb);
-    printf("  Mode:                     %s            (%o in octal)\n", mode_text, sb.st_mode & 0b111111111);
+    printf("  Mode:                     %s        (%o in octal)\n", mode_text, sb.st_mode & 0b111111111);
     free(mode_text);
     printf("  Link count:               %ld\n", (long)sb.st_nlink);
     owner = get_owner_name(sb);
-    printf("  Owner Id:                 %s                 (UID = %d)\n", owner, sb.st_uid);
+    printf("  Owner Id:                 %s             (UID = %d)\n", owner, sb.st_uid);
     // free(owner);
 
     group = get_group_name(sb);
-    printf("  Group Id:                 %s                 (GID = %d)\n", group, sb.st_gid);
+    printf("  Group Id:                 %s             (GID = %d)\n", group, sb.st_gid);
     // free(group);
 
     printf("  Preferred I/O block size: %ld bytes\n", (long)sb.st_blksize);
@@ -238,6 +238,6 @@ char *format_time(__time_t *time)
     char *buf = malloc(1024);
     memset(buf, 0, 1024);
     local = localtime(time);
-    strftime(buf, 1023, "%Y-%m-%d %H:%M:%S %z (%Z) %A (local)", local);
+    strftime(buf, 1023, "%Y-%m-%d %H:%M:%S %z (%Z) %a (local)", local);
     return buf;
 }
