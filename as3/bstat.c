@@ -17,16 +17,19 @@ void mystat(char *path);
 
 int main(int argc, char *argv[])
 {
+    int i;
     if (argc < 2)
     {
         fprintf(stderr, "Usage: %s <pathname> ... <pathname>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 1; i < argc; i++)
+    for (i = 1; i < argc; i++)
     {
         mystat(argv[i]);
     }
+
+    return 0;
 }
 
 void mystat(char *path)
@@ -102,15 +105,15 @@ void mystat(char *path)
     printf("  Device ID Number:         %lu\n", sb.st_dev);
     printf("  I-node number:            %lu\n", sb.st_ino);
     mode_text = get_mode(sb);
-    printf("  Mode:                     %s        (%o in octal)\n", mode_text, sb.st_mode & 0b111111111);
+    printf("  Mode:                     %s                  (%o in octal)\n", mode_text, sb.st_mode & 0b111111111);
     free(mode_text);
     printf("  Link count:               %ld\n", (long)sb.st_nlink);
     owner = get_owner_name(sb);
-    printf("  Owner Id:                 %s             (UID = %d)\n", owner, sb.st_uid);
+    printf("  Owner Id:                 %s                       (UID = %d)\n", owner, sb.st_uid);
     // free(owner);
 
     group = get_group_name(sb);
-    printf("  Group Id:                 %s             (GID = %d)\n", group, sb.st_gid);
+    printf("  Group Id:                 %s                       (GID = %d)\n", group, sb.st_gid);
     // free(group);
 
     printf("  Preferred I/O block size: %ld bytes\n", (long)sb.st_blksize);
@@ -211,6 +214,7 @@ char *get_group_name(struct stat sb)
 
 char *extract_filename(char *name)
 {
+    int i;
     if (name == NULL)
     {
         return NULL;
@@ -221,7 +225,7 @@ char *extract_filename(char *name)
         return name + 2;
     }
 
-    for (int i = strlen(name); i > 0; i--)
+    for (i = strlen(name); i > 0; i--)
     {
         if (name[i] == '/' || name[i] == '\\')
         {
