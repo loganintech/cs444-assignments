@@ -16,7 +16,8 @@ int main(int argc, char **argv)
         exit();
     }
 
-    for (int i = 2; argv[i] != NULL; i++)
+    int i;
+    for (i = 2; argv[i] != NULL; i++)
     {
         int pid = atoi(argv[i]);
         if (pid == 0)
