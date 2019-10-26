@@ -150,7 +150,7 @@ int cps(int);
 #endif // CPS
 int kdebug(int);
 int halt(void);
-int renice(void);
+int renice(int nice, int pid);
 
 // ulib.c
 int stat(const char *, struct stat *);

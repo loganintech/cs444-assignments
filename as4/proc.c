@@ -597,7 +597,7 @@ int sys_cps(void)
 
   acquire(&ptable.lock);
   cprintf(
-      "pid\tppid\tname\tstate\tsize\tstart time\t\tticks\tsched");
+      "pid\tppid\tname\tstate\tsize\tstart time\t\tticks\tsched\tnice");
   cprintf("\n");
   for (i = 0; i < NPROC; i++)
   {
@@ -619,7 +619,7 @@ int sys_cps(void)
       int minute = ptable.proc[i].begin_date.minute;
       int second = ptable.proc[i].begin_date.second;
 
-      cprintf("%d\t%d\t%s\t%s\t%u\t%d-%d%d-%d%d %d%d:%d%d:%d%d\t%d\t%d",
+      cprintf("%d\t%d\t%s\t%s\t%u\t%d-%d%d-%d%d %d%d:%d%d:%d%d\t%d\t%d\t%d",
               ptable.proc[i].pid,
               ptable.proc[i].parent ? ptable.proc[i].parent->pid : 1,
               ptable.proc[i].name,
@@ -632,7 +632,8 @@ int sys_cps(void)
               minute / 10, minute % 10,
               second / 10, second % 10,
               ptable.proc[i].ticks_total,
-              ptable.proc[i].sched_times);
+              ptable.proc[i].sched_times,
+              ptable.proc[i].nice_value);
       cprintf("\n");
     }
     else
