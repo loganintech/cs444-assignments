@@ -82,7 +82,12 @@ struct proc
   unsigned int ticks_total;
   unsigned int ticks_begin;
   unsigned int sched_times;
+  unsigned int nice_value;
 };
+
+#define DEFAULT_NICE_VALUE 20
+#define MAX_NICE_VALUE 40
+#define MIN_NICE_VALUE 1
 
 // Process memory is laid out contiguously, low addresses first:
 //   text

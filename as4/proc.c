@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "rand.h"
 
 uint debugState = FALSE;
 
@@ -122,6 +123,7 @@ found:
   p->ticks_total = 0;
   p->ticks_begin = 0;
   p->sched_times = 0;
+  p->nice_value = DEFAULT_NICE_VALUE;
 
   return p;
 }
@@ -362,12 +364,35 @@ void scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
+    unsigned int total_nice = 0;
+
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if (p->state != RUNNABLE)
+        continue;
+      total_nice += p->nice_value;
+    }
+
+    if (total_nice == 0)
+    {
+      continue;
+    }
+
+    int nice_source = rand() % total_nice;
+
+    int running_nice = 0;
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     {
       if (p->state != RUNNABLE)
         continue;
+
+      running_nice += p->nice_value;
+      if (running_nice <= nice_source)
+      {
+        continue;
+      }
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -379,7 +404,7 @@ void scheduler(void)
       p->state = RUNNING;
       swtch(&(c->scheduler), p->context);
       switchkvm();
-      p->ticks_total = upticks() - p->ticks_begin;
+      p->ticks_total += upticks() - p->ticks_begin;
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
