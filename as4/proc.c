@@ -233,6 +233,7 @@ int fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+  np->nice_value = curproc->nice_value;
 
   release(&ptable.lock);
 
