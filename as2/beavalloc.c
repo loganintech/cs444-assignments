@@ -2,29 +2,35 @@
 #include "unistd.h"
 #include "stdio.h"  // for stderr
 #include "string.h" // for memset
+#include "assert.h"
+#include "errno.h"
+#include "stddef.h"
 
 #define bool int
 #define TRUE 1
 #define FALSE 0
 #define REGION_DATA_SIZE sizeof(struct region_info)
+#define BLOCK_REQUEST_SIZE 1024
 
 static struct region_info *head;
 static bool global_verbose = FALSE;
 
 struct region_info
 {
-    size_t bytes;
+    size_t size;
+    size_t capacity;
     struct region_info *next;
     bool is_free;
 };
 
 struct region_info *get_empty_block(struct region_info **last, size_t size);
 struct region_info *get_bytes(struct region_info *last, size_t size);
+void join_free_blocks(void);
 
 struct region_info *get_empty_block(struct region_info **last, size_t size)
 {
     struct region_info *curr = *last;
-    while (curr != NULL && (curr->bytes < size || !curr->is_free))
+    while (curr != NULL && (curr->capacity < (size * 1.5) || !curr->is_free))
     {
         *last = curr;
         curr = curr->next;
@@ -32,14 +38,42 @@ struct region_info *get_empty_block(struct region_info **last, size_t size)
     return curr;
 }
 
+void join_free_blocks(void)
+{
+    struct region_info *meta;
+    meta = head;
+    // printf("\n%p - %p\n", meta + 1 + (meta->size / REGION_DATA_SIZE), meta->next);
+    while (meta && meta->next)
+    {
+        if (global_verbose)
+        {
+            printf("Joining Blocks");
+        }
+        if (!meta->is_free || !meta->next->is_free)
+        {
+            meta = meta->next;
+            continue;
+        }
+        meta->size = meta->size + meta->next->size;
+        meta->capacity = meta->capacity + meta->next->capacity + REGION_DATA_SIZE;
+        meta->next = meta->next->next;
+        meta = meta->next;
+    }
+}
+
 struct region_info *get_bytes(struct region_info *last, size_t size)
 {
     struct region_info *new_block = sbrk(0);
-    void *new_bytes = sbrk(size + REGION_DATA_SIZE);
+    // If size is 500, size / BLOCK_REQUEST_SIZE == 0;
+    int needed = BLOCK_REQUEST_SIZE * (1 + ((REGION_DATA_SIZE + size) / BLOCK_REQUEST_SIZE));
+    void *new_bytes = sbrk(needed);
     // new_bytes and new_block should point to the same thing now
+
+    assert(new_block == new_bytes);
 
     if (new_bytes == (void *)-1) // an error occurred
     {
+        errno = ENOMEM;
         return NULL;
     }
 
@@ -48,7 +82,8 @@ struct region_info *get_bytes(struct region_info *last, size_t size)
         last->next = new_block;
     }
 
-    new_block->bytes = size;
+    new_block->size = size;
+    new_block->capacity = needed - REGION_DATA_SIZE;
     new_block->next = NULL;
     new_block->is_free = FALSE;
     return new_block;
@@ -58,6 +93,7 @@ void *beavalloc(size_t size)
 {
     struct region_info *last;
     struct region_info *new_block;
+    join_free_blocks();
     if (size == 0)
     {
         return NULL;
@@ -84,15 +120,15 @@ void *beavalloc(size_t size)
 
         // Check if we have enough space to split the block
         // Make sure it has enough space, giving it at least 64 bytes of overhead
-        if (new_block->bytes > size + REGION_DATA_SIZE + 64)
+        if (new_block->size > size + REGION_DATA_SIZE + 64)
         {
             // We have to divide size by the region size because new_block is already a `region_info` pointer
             struct region_info *second_part = new_block + 1 + (size / REGION_DATA_SIZE);
-            second_part->next = new_block->next;                               // Set our second part of this block to the next of w/e the current block is
-            second_part->bytes = (new_block->bytes - size) - REGION_DATA_SIZE; // The size of the new block is the size of the old one - the size we're taking - the size of the data region
+            second_part->next = new_block->next;                             // Set our second part of this block to the next of w/e the current block is
+            second_part->size = (new_block->size - size) - REGION_DATA_SIZE; // The size of the new block is the size of the old one - the size we're taking - the size of the data region
             second_part->is_free = TRUE;
             new_block->next = second_part; // Set the current block to point to our new second part
-            new_block->bytes = size;       // Reset the size on the new block
+            new_block->size = size;        // Reset the size on the new block
         }
 
         return new_block + 1;
@@ -116,13 +152,7 @@ void beavfree(void *ptr)
 
     meta = ptr - REGION_DATA_SIZE;
     meta->is_free = TRUE;
-    // printf("\n%p - %p\n", meta + 1 + (meta->bytes / REGION_DATA_SIZE), meta->next);
-    while (meta && meta + 1 + (meta->bytes / REGION_DATA_SIZE) == meta->next && meta->next->is_free)
-    {
-        meta->bytes = meta->bytes + REGION_DATA_SIZE + meta->next->bytes;
-        meta->next = meta->next->next;
-        meta = meta->next;
-    }
+    join_free_blocks();
 }
 
 void beavalloc_reset(void)
@@ -157,8 +187,9 @@ void *beavrealloc(void *ptr, size_t size)
     }
 
     meta = ptr - REGION_DATA_SIZE;
-    if (meta->bytes >= size)
+    if (meta->capacity >= size)
     {
+        meta->size = size;
         return ptr;
     }
 
@@ -168,7 +199,7 @@ void *beavrealloc(void *ptr, size_t size)
         return NULL;
     }
 
-    memcpy(new_bytes, ptr, meta->bytes);
+    memcpy(new_bytes, ptr, meta->size);
     beavfree(ptr);
     return new_bytes;
 }
@@ -209,17 +240,15 @@ void beavalloc_dump(unsigned int leaks_only)
                     curr + REGION_DATA_SIZE,
                     (unsigned)((void *)curr - (void *)head),
                     (unsigned)((void *)curr + REGION_DATA_SIZE - (void *)head),
-                    (unsigned)curr->bytes,
-                    (unsigned)curr->bytes,
-                    (unsigned)(curr->bytes + REGION_DATA_SIZE),
+                    (unsigned)curr->capacity,
+                    (unsigned)curr->size,
+                    (unsigned)(curr->capacity + REGION_DATA_SIZE),
                     curr->is_free ? "free  " : "in use",
                     curr->is_free ? '*' : ' ');
-            if (!curr->is_free)
-            {
-                user_bytes += curr->bytes;
-            }
-            capacity_bytes += curr->bytes;
-            block_bytes += curr->bytes + REGION_DATA_SIZE;
+
+            user_bytes += curr->size;
+            capacity_bytes += curr->capacity;
+            block_bytes += curr->capacity + REGION_DATA_SIZE;
             if (curr->is_free == FALSE && leaks_only == TRUE)
             {
                 leak_count++;
