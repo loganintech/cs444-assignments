@@ -1,0 +1,12 @@
+ 12:53:03 up 30 days,  3:49, 10 users,  load average: 0.00, 0.01, 0.16
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+dengh    pts/0    10-248-146-229.w 12:09    4:23   0.47s  0.47s -bash
+godsey   pts/1    10-197-33-123.sd 10:45   14:39   0.89s  0.89s -bash
+liaoto   pts/2    flip2.engr.orego 10:14    1:39m  0.35s  0.35s -tcsh
+kirchchr pts/4    10-248-163-253.w 12:34   31.00s  0.33s  0.18s vim problem3.c
+heli     pts/5    10-249-7-129.wir 12:11   41:37   0.11s  0.11s -bash
+kochecam pts/6    10-197-32-240.sd 10:58    7.00s  0.40s  0.40s -bash
+chaneyr  pts/7    10-116-14-161.wi 11:47   21:27   0.38s  0.38s -bash
+leamya   pts/8    10-251-38-100.wi 11:20   15.00s  0.26s  0.26s sshd: leamya [priv] 
+anandn   pts/9    10-249-219-101.w 12:27    7.00s  0.19s  0.19s -bash
+chaneyr  pts/10   10-116-14-161.wi 11:47    7.00s  0.37s  0.21s sshd: chaneyr [priv]

@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "clang-x64",
+            "compilerArgs": [
+                "/usr/include/**",
+                "/usr/local/include/**"
+            ],
+            "includePath": [
+                "/usr/include/**",
+                "/usr/local/include/**"
+            ]
+        }
+    ],
+    "version": 4
+}
