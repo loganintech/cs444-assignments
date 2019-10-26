@@ -44,6 +44,28 @@ int sys_srand(void)
   return 0;
 }
 
+int sys_renice(void)
+{
+  int nice;
+  int pid;
+
+  if (argint(0, &nice) < 0)
+  {
+    return -1;
+  }
+  if (nice < MIN_NICE_VALUE || nice > MAX_NICE_VALUE)
+  {
+    return 1;
+  }
+  if (argint(1, &pid) < 0)
+  {
+    return -1;
+  }
+
+  int r = renice(nice, pid);
+  return r;
+}
+
 int sys_exit(void)
 {
   exit();

@@ -109,6 +109,7 @@ extern int sys_kdebug(void);
 extern int sys_halt(void);
 extern int sys_rand(void);
 extern int sys_srand(void);
+extern int sys_renice(void);
 
 static int (*syscalls[])(void) = {
     [SYS_fork] sys_fork,
@@ -142,6 +143,7 @@ static int (*syscalls[])(void) = {
     [SYS_halt] sys_halt,
     [SYS_rand] sys_rand,
     [SYS_srand] sys_srand,
+    [SYS_renice] sys_renice,
 };
 
 void syscall(void)

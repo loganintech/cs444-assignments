@@ -70,6 +70,32 @@ myproc(void)
   return p;
 }
 
+int renice(int nice, int pid)
+{
+  acquire(&ptable.lock);
+
+  int found = 0;
+  struct proc *p;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      found = 1;
+      p->nice_value = nice;
+      break;
+    }
+  }
+
+  release(&ptable.lock);
+
+  if (found == 0)
+  {
+    return 2;
+  }
+
+  return 0;
+}
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
