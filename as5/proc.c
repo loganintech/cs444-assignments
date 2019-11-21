@@ -343,6 +343,11 @@ void kthread_exit(int exitValue)
   struct proc *curproc = myproc();
   int fd;
 
+  if (debugState)
+  {
+    cprintf("%s %s %d: exit called on thread:  %s   tid: %d\n", __FILE__, __FUNCTION__, __LINE__, currproc->name, currproc->tid);
+  }
+
   if (curproc == initproc)
     panic("init exiting");
 
