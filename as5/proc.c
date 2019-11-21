@@ -306,6 +306,10 @@ int kthread_join(benny_thread_t tid)
 
     while (p->state != ZOMBIE)
     {
+      if (debugState)
+      {
+        cprintf("%s %s %d: thread is not a zombie:  %s   tid: %d\n", __FILE__, __FUNCTION__, __LINE__, curproc->name, curproc->tid);
+      }
       release(&ptable.lock);
       yield();
       acquire(&ptable.lock);

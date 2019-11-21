@@ -245,7 +245,7 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 # qeum can go upto 8, but i usually use 4
 ifndef CPUS
 # up this to 4 when ready
-CPUS := 1
+CPUS := 4
 endif
 QMEM = 512
 QEMU_SHUTDOWN = -device isa-debug-exit,iobase=0xf4,iosize=0x04
