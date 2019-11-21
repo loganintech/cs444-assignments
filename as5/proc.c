@@ -317,8 +317,7 @@ int kthread_join(benny_thread_t tid)
     }
 
     curproc->thread_count--;
-    // Found one.
-    // kfree(p->kstack);
+
     kfree(p->kstack);
     p->kstack = 0;
     p->pid = 0;
@@ -333,49 +332,17 @@ int kthread_join(benny_thread_t tid)
 
   release(&ptable.lock);
   return -1;
-
-  // // Scan through table looking for exited children.
-  // for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-  // {
-
-  //   if (p->parent != curproc || p->tid != tid)
-  //   {
-  //     continue;
-  //   }
-
-  //   while (p->state != ZOMBIE)
-  //   {
-  //     release(&ptable.lock);
-  //     yield();
-  //     acquire(&ptable.lock);
-  //   }
-
-  //   curproc->thread_count--;
-
-  //   kfree(p->kstack);
-  //   p->kstack = 0;
-  //   p->pid = 0;
-  //   p->parent = 0;
-  //   p->name[0] = 0;
-  //   p->killed = 0;
-  //   p->state = UNUSED;
-  //   release(&ptable.lock);
-  //   return 0;
-  // }
-  // release(&ptable.lock);
-  // return -1;
 }
 
 void kthread_exit(int exitValue)
 {
   struct proc *curproc = myproc();
-  struct proc *p = curproc;
   int fd;
 
   if (curproc == initproc)
     panic("init exiting");
 
-  if (p->is_thread)
+  if (curproc->is_thread)
   {
     // Close all open files.
     for (fd = 0; fd < NOFILE; fd++)
@@ -397,6 +364,10 @@ void kthread_exit(int exitValue)
   curproc->thread_exit_value = exitValue;
   curproc->oncpu = -1;
   curproc->state = ZOMBIE;
+
+  acquire(&ptable.lock);
+  sched();
+  panic("kthread_exit");
 }
 
 #endif // KTHREADS
