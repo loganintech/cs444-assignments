@@ -299,10 +299,8 @@ int kthread_join(benny_thread_t tid)
       if (p->state == ZOMBIE)
       {
         // Found one.
-        pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
         p->killed = 0;
