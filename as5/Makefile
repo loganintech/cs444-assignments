@@ -203,6 +203,7 @@ UPROGS=\
 	_thtst3\
 	_thtst4\
 	_thtst5\
+	_thtst6\
 	$(NULL)
 
 fs.img: mkfs README $(UPROGS)
