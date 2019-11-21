@@ -122,8 +122,8 @@ found:
 #ifdef KTHREADS
   // # error You need to initialize new proc data memebers
   p->oncpu = 0;
-  p->is_thread = 0;
-  p->is_parent = 0;
+  p->is_thread = FALSE;
+  p->is_parent = FALSE;
   p->thread_count = 0;
   p->tid = 0;
   p->next_tid = 1;
@@ -265,6 +265,8 @@ int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
   np->state = RUNNABLE;
 
   release(&ptable.lock);
+
+  cprintf("Returning tid: %d", tid);
 
   return tid;
 }
