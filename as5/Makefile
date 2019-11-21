@@ -83,6 +83,7 @@ DEFINES += -DGETPPID
 DEFINES += -DCPS
 DEFINES += -DKDEBUG
 DEFINES += -DKTHREADS
+
 CFLAGS = $(DEFINES) -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = $(DEFINES) -m32 -gdwarf-2 -Wa,-divide
@@ -200,6 +201,8 @@ UPROGS=\
 	_thtst1\
 	_thtst2\
 	_thtst3\
+	_thtst4\
+	_thtst5\
 	$(NULL)
 
 fs.img: mkfs README $(UPROGS)
