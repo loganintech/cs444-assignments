@@ -315,10 +315,10 @@ int kthread_join(benny_thread_t tid)
 
       if (debugState)
       {
-        cprintf("Found a thread we want to kill %s - %d", p->name, p->tid);
+        cprintf("Found a thread we want to kill %s - %d\n", p->name, p->tid);
       }
       // Found one.
-      kfree(p->kstack);
+      // kfree(p->kstack);
       p->kstack = 0;
       p->parent = 0;
       p->name[0] = 0;
