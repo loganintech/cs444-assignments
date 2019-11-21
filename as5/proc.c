@@ -280,6 +280,11 @@ int kthread_join(benny_thread_t tid)
   struct proc *p;
   struct proc *curproc = myproc();
 
+  if (debugState)
+  {
+    cprintf("%s %s %d: kthread_join() called from process:  %s   tid: %d\n", __FILE__, __FUNCTION__, __LINE__, curproc->name, curproc->tid);
+  }
+
   if ((curproc->is_parent && curproc->thread_count == 0) || tid == 0)
   {
     return -1;

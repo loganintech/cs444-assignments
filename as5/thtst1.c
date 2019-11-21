@@ -11,10 +11,9 @@ static int global = 10;
 #define IVAL 0x0f0f0f0f
 #define FVAL 0Xaeaeaeae
 
-void 
-func1(void *arg)
+void func1(void *arg)
 {
-    int *i = (int *) ((int *) arg);
+    int *i = (int *)((int *)arg);
 
     //printf(1, "%s %d\n", __FILE__, __LINE__);
     assert(global == 10);
@@ -30,19 +29,16 @@ func1(void *arg)
 }
 #endif // KTHREADS
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 #ifdef KTHREADS
     benny_thread_t bt = NULL;
     int rez = -1;
     int i = IVAL;
-    
+
     printf(1, "global before: %d\n", global);
     printf(1, "i before     : %x\n", i);
     rez = benny_thread_create(&bt, func1, &i);
-
-    sleep(2);
 
     printf(1, "rez          : %x\n", rez);
 
