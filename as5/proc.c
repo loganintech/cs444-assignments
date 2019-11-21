@@ -126,7 +126,7 @@ found:
   p->is_parent = 0;
   p->thread_count = 0;
   p->tid = 0;
-  p->next_tid = 0;
+  p->next_tid = 1;
   p->thread_exit_value = 0;
 #endif // KTHREADS
 
