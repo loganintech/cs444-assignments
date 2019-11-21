@@ -214,7 +214,7 @@ int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
 
   if (debugState)
   {
-    cprintf("%s %s %d: fork() called from process:  %s   pid: %d\n", __FILE__, __FUNCTION__, __LINE__, curproc->name, curproc->pid);
+    cprintf("%s %s %d: kthread_create() called from process:  %s   tid: %d\n", __FILE__, __FUNCTION__, __LINE__, curproc->name, curproc->tid);
   }
 
   // Allocate process.
@@ -266,6 +266,11 @@ int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
 
   release(&ptable.lock);
 
+  if (debugState)
+  {
+    cprintf("%s %s %d: kthread_create() returning from process:  %s   tid: %d\n", __FILE__, __FUNCTION__, __LINE__, curproc->name, tid);
+  }
+
   return tid;
 }
 
@@ -303,18 +308,19 @@ int kthread_join(benny_thread_t tid)
         acquire(&ptable.lock);
       }
 
-      if (p->state == ZOMBIE)
+      if (debugState)
       {
-        // Found one.
-        kfree(p->kstack);
-        p->kstack = 0;
-        p->parent = 0;
-        p->name[0] = 0;
-        p->killed = 0;
-        p->state = UNUSED;
-        release(&ptable.lock);
-        return 0;
+        cprintf("Found a thread we want to kill %s - %d", p->name, p->tid);
       }
+      // Found one.
+      kfree(p->kstack);
+      p->kstack = 0;
+      p->parent = 0;
+      p->name[0] = 0;
+      p->killed = 0;
+      p->state = UNUSED;
+      release(&ptable.lock);
+      return 0;
     }
 
     // No point waiting if we don't have any children.
