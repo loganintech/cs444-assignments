@@ -323,7 +323,7 @@ int kthread_join(benny_thread_t tid)
 
     curproc->thread_count--;
 
-    kfree(p->kstack);
+    // kfree(p->kstack);
     p->kstack = 0;
     p->pid = 0;
     p->tid = 0;
