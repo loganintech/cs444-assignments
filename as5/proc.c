@@ -214,7 +214,7 @@ int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
 
   if (debugState)
   {
-    cprintf("%s %s %d: kthread_create() called from process:  %s   tid: %d\n", __FILE__, __FUNCTION__, __LINE__, curproc->name, curproc->tid);
+    cprintf("%s %s %d: kthread_create() called from process:  %s   tid: %d   next_tid: %d\n", __FILE__, __FUNCTION__, __LINE__, curproc->name, curproc->tid, curproc->next_tid);
   }
 
   // Allocate process.
