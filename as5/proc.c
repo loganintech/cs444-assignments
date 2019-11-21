@@ -244,15 +244,14 @@ int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
   np->tf->eip = (uint)func;
-  np->tf->esp = ((int)tstack) + PGSIZE;
+  np->tf->esp = ((uint)tstack) + PGSIZE;
   np->tf->esp -= sizeof(int);
   *((int *)(np->tf->esp)) = (int)arg_ptr;
 
-  ushort tid = np->parent->tid;
+  ushort tid = np->parent->next_tid++;
   np->tid = tid;
   np->tf->esp -= sizeof(int);
   *((int *)np->tf->esp) = tid;
-  np->parent->next_tid++;
 
   for (i = 0; i < NOFILE; i++)
     if (curproc->ofile[i])
