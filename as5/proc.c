@@ -296,49 +296,43 @@ int kthread_join(benny_thread_t tid)
     curproc = curproc->parent;
   }
 
-  for (;;)
+  // Scan through table looking for exited children.
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
-    // Scan through table looking for exited children.
-    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    if (p->parent != curproc || p->tid != tid)
     {
-      if (p->parent != curproc || p->tid != tid)
-      {
-        continue;
-      }
-
-      while (p->state != ZOMBIE)
-      {
-        release(&ptable.lock);
-        yield();
-        acquire(&ptable.lock);
-      }
-
-      if (debugState)
-      {
-        cprintf("Found a thread we want to kill %s - %d\n", p->name, p->tid);
-      }
-      // Found one.
-      // kfree(p->kstack);
-      p->kstack = 0;
-      p->parent = 0;
-      p->name[0] = 0;
-      p->killed = 0;
-      p->state = UNUSED;
-      release(&ptable.lock);
-      curproc->thread_count--;
-      return 0;
+      continue;
     }
 
-    // No point waiting if we don't have any children.
-    if (curproc->killed)
+    while (p->state != ZOMBIE)
     {
       release(&ptable.lock);
-      return -1;
+      yield();
+      acquire(&ptable.lock);
     }
 
-    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-    sleep(curproc, &ptable.lock); //DOC: wait-sleep
+    if (debugState)
+    {
+      cprintf("Found a thread we want to kill %s - %d\n", p->name, p->tid);
+    }
+
+    curproc->thread_count--;
+    // Found one.
+    // kfree(p->kstack);
+    kfree(p->kstack);
+    p->kstack = 0;
+    p->pid = 0;
+    p->tid = 0;
+    p->parent = 0;
+    p->name[0] = 0;
+    p->killed = 0;
+    p->state = UNUSED;
+    release(&ptable.lock);
+    return 0;
   }
+
+  release(&ptable.lock);
+  return -1;
 
   // // Scan through table looking for exited children.
   // for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
