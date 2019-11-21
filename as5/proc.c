@@ -325,6 +325,7 @@ int kthread_join(benny_thread_t tid)
       p->killed = 0;
       p->state = UNUSED;
       release(&ptable.lock);
+      curproc->thread_count--;
       return 0;
     }
 
