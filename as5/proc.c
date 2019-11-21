@@ -345,7 +345,7 @@ void kthread_exit(int exitValue)
 
   if (debugState)
   {
-    cprintf("%s %s %d: exit called on thread:  %s   tid: %d\n", __FILE__, __FUNCTION__, __LINE__, currproc->name, currproc->tid);
+    cprintf("%s %s %d: exit called on thread:  %s   tid: %d\n", __FILE__, __FUNCTION__, __LINE__, curproc->name, curproc->tid);
   }
 
   if (curproc == initproc)
