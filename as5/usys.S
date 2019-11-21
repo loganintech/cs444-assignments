@@ -41,4 +41,9 @@ SYSCALL(halt)
 
 #ifdef KTHREADS
 // # error You need to extern the sys_kthread calls here
+
+SYSCALL(kthread_create)
+SYSCALL(kthread_join)
+SYSCALL(kthread_exit)
+
 #endif // KTHREADS

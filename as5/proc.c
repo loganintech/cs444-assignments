@@ -120,7 +120,14 @@ found:
   p->context->eip = (uint)forkret;
 
 #ifdef KTHREADS
-// # error You need to initialize new proc data memebers
+  // # error You need to initialize new proc data memebers
+  p->oncpu = 0;
+  p->is_thread = 0;
+  p->is_parent = 0;
+  p->thread_count = 0;
+  p->tid = 0;
+  p->next_tid = 0;
+  p->thread_exit_value = 0;
 #endif // KTHREADS
 
   return p;
@@ -195,14 +202,13 @@ int growproc(int n)
 
 int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
 {
-
   // If the tstack pointer is not page-aligned return 01
-  if (tstack % PGSIZE != 0)
+  if ((uint)tstack % PGSIZE != 0)
   {
     return -1;
   }
 
-  int i, pid;
+  int i;
   struct proc *np;
   struct proc *curproc = myproc();
 
@@ -237,7 +243,7 @@ int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
-  np->tf->eip = func;
+  np->tf->eip = (uint)func;
   np->tf->esp = ((int)tstack) + PGSIZE;
   np->tf->esp -= sizeof(int);
   *((int *)(np->tf->esp)) = (int)arg_ptr;
@@ -264,13 +270,10 @@ int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
   return tid;
 }
 
-int kthread_join(int tid)
+int kthread_join(benny_thread_t tid)
 {
 
   struct proc *p;
-  int havekids, pid;
-  struct proc *curproc = myproc();
-
   struct proc *curproc = myproc();
 
   if ((curproc->is_parent && curproc->thread_count == 0) || tid == 0)
@@ -285,7 +288,6 @@ int kthread_join(int tid)
   }
 
   // Scan through table looking for exited children.
-  havekids = 0;
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
 
@@ -303,7 +305,6 @@ int kthread_join(int tid)
 
     curproc->thread_count--;
 
-    pid = p->pid;
     kfree(p->kstack);
     p->kstack = 0;
     p->pid = 0;
@@ -321,7 +322,7 @@ int kthread_join(int tid)
 void kthread_exit(int exitValue)
 {
   struct proc *curproc = myproc();
-  struct proc *p;
+  struct proc *p = curproc;
   int fd;
 
   if (curproc == initproc)
@@ -750,7 +751,6 @@ int sys_cps(void)
 
       cprintf("\t%d\t%d\t%d", ptable.proc[i].is_parent, ptable.proc[i].is_thread, ptable.proc[i].tid);
 
-// # error You need to add the thread data: oncpu, isParent, isThread, threadCount
 #endif // KTHREADS
       cprintf("\n");
     }

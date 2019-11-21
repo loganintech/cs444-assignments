@@ -34,5 +34,8 @@
 #define SYS_halt 25
 
 #ifdef KTHREADS
+#define SYS_kthread_create 26
+#define SYS_kthread_join 27
+#define SYS_kthread_exit 28
 // # error put the defines for the SYS_kthread_ functions in here
 #endif // KTHREADS

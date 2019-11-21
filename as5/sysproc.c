@@ -125,14 +125,38 @@ int sys_halt(void)
 
 int sys_kthread_create(void)
 {
+  int func = 0;
+  if (argint(0, &func) < 0)
+    return -1;
+
+  int arg_ptr = 0;
+  if (argint(1, &arg_ptr) < 0)
+    return -1;
+
+  int tstack = 0;
+  if (argint(2, &tstack) < 0)
+    return -1;
+
+  return kthread_create((void *)func, (void *)arg_ptr, (void *)tstack);
 }
 
 int sys_kthread_join(void)
 {
+  int tid = 0;
+  if (argint(0, &tid) < 0)
+    return -1;
+
+  return kthread_join(tid);
 }
 
 int sys_kthread_exit(void)
 {
+  int exit_val = 0;
+  if (argint(0, &exit_val) < 0)
+    return -1;
+
+  kthread_exit(exit_val);
+  return 0;
 }
 
 #endif // KTHREADS

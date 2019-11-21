@@ -124,7 +124,11 @@ int wait(void);
 void wakeup(void *);
 void yield(void);
 #ifdef KTHREADS
+#include "benny_thread.h"
 // # error You need to have function prototypes for the kthread_ fucntions here
+int kthread_create(void (*func)(void *), void *, void *);
+int kthread_join(benny_thread_t);
+void kthread_exit(int);
 #endif // KTHREADS
 
 // swtch.S
