@@ -291,10 +291,18 @@ int kthread_join(benny_thread_t tid)
     // Scan through table looking for exited children.
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     {
-      if (p->parent != curproc || p->is_thread)
-
+      if (p->parent != curproc || p->tid != tid)
+      {
         continue;
-      havekids = 1;
+      }
+
+      while (p->state != ZOMBIE)
+      {
+        release(&ptable.lock);
+        yield();
+        acquire(&ptable.lock);
+      }
+
       if (p->state == ZOMBIE)
       {
         // Found one.
