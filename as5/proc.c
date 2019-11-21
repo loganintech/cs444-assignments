@@ -266,8 +266,6 @@ int kthread_create(void (*func)(void *), void *arg_ptr, void *tstack)
 
   release(&ptable.lock);
 
-  cprintf("Returning tid: %d", tid);
-
   return tid;
 }
 
@@ -288,36 +286,73 @@ int kthread_join(benny_thread_t tid)
     curproc = curproc->parent;
   }
 
-  // Scan through table looking for exited children.
-  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  for (;;)
   {
-
-    if (p->parent != curproc || p->tid != tid)
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     {
-      continue;
+      if (p->parent != curproc || p->is_thread)
+
+        continue;
+      havekids = 1;
+      if (p->state == ZOMBIE)
+      {
+        // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        release(&ptable.lock);
+        return 0;
+      }
     }
 
-    while (p->state != ZOMBIE)
+    // No point waiting if we don't have any children.
+    if (curproc->killed)
     {
       release(&ptable.lock);
-      yield();
-      acquire(&ptable.lock);
+      return -1;
     }
 
-    curproc->thread_count--;
-
-    kfree(p->kstack);
-    p->kstack = 0;
-    p->pid = 0;
-    p->parent = 0;
-    p->name[0] = 0;
-    p->killed = 0;
-    p->state = UNUSED;
-    release(&ptable.lock);
-    return 0;
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(curproc, &ptable.lock); //DOC: wait-sleep
   }
-  release(&ptable.lock);
-  return -1;
+
+  // // Scan through table looking for exited children.
+  // for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  // {
+
+  //   if (p->parent != curproc || p->tid != tid)
+  //   {
+  //     continue;
+  //   }
+
+  //   while (p->state != ZOMBIE)
+  //   {
+  //     release(&ptable.lock);
+  //     yield();
+  //     acquire(&ptable.lock);
+  //   }
+
+  //   curproc->thread_count--;
+
+  //   kfree(p->kstack);
+  //   p->kstack = 0;
+  //   p->pid = 0;
+  //   p->parent = 0;
+  //   p->name[0] = 0;
+  //   p->killed = 0;
+  //   p->state = UNUSED;
+  //   release(&ptable.lock);
+  //   return 0;
+  // }
+  // release(&ptable.lock);
+  // return -1;
 }
 
 void kthread_exit(int exitValue)
